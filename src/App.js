@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
  
-const GROQ_API_KEY = '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';
+const GROQ_API_KEY = process.env.REACT_APP_GROQ_API_KEY;
  
 const mockStats = {
   totalUsers: 1247,

@@ -4,36 +4,36 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 const GROQ_API_KEY = process.env.REACT_APP_GROQ_API_KEY;
 
 const mockStats = {
-  totalUsers: 1247,
-  activeToday: 89,
-  totalMessages: 15632,
-  avgResponseTime: 1.2,
+  totalUsers: 47,
+  activeToday: 12,
+  totalMessages: 389,
+  avgResponseTime: 1.4,
 };
 
 const mockMessageData = [
-  { day: 'Дс', messages: 120 },
-  { day: 'Сс', messages: 98 },
-  { day: 'Ср', messages: 145 },
-  { day: 'Бс', messages: 132 },
-  { day: 'Жм', messages: 167 },
-  { day: 'Сб', messages: 89 },
-  { day: 'Жс', messages: 76 },
+  { day: 'Дс', messages: 42 },
+  { day: 'Сс', messages: 38 },
+  { day: 'Ср', messages: 67 },
+  { day: 'Бс', messages: 55 },
+  { day: 'Жм', messages: 71 },
+  { day: 'Сб', messages: 29 },
+  { day: 'Жс', messages: 87 },
 ];
 
 const mockCommands = [
-  { command: '/start', count: 234 },
-  { command: '/help', count: 189 },
-  { command: '/db', count: 156 },
-  { command: '/benchmark', count: 98 },
-  { command: '/funcall', count: 76 },
+  { command: '/start', count: 47 },
+  { command: '/imagine', count: 34 },
+  { command: '/search', count: 28 },
+  { command: '/calendar', count: 19 },
+  { command: '/private', count: 12 },
 ];
 
 const mockUsers = [
-  { id: 1, name: 'Алибек', username: '@alibek', messages: 45, lastSeen: '5 мин бұрын' },
-  { id: 2, name: 'Айгерім', username: '@aigerin', messages: 32, lastSeen: '1 сағат бұрын' },
-  { id: 3, name: 'Дамир', username: '@damir', messages: 28, lastSeen: '2 сағат бұрын' },
-  { id: 4, name: 'Нұрлан', username: '@nurlan', messages: 19, lastSeen: 'Кеше' },
-  { id: 5, name: 'Зарина', username: '@zarina', messages: 15, lastSeen: 'Кеше' },
+  { id: 1, name: 'Нұрлан', username: '@nurlan', messages: 89, lastSeen: '2 мин бұрын' },
+  { id: 2, name: 'Айгерім', username: '@aigerin', messages: 54, lastSeen: '15 мин бұрын' },
+  { id: 3, name: 'Дамир', username: '@damir', messages: 43, lastSeen: '1 сағат бұрын' },
+  { id: 4, name: 'Зарина', username: '@zarina', messages: 31, lastSeen: '3 сағат бұрын' },
+  { id: 5, name: 'Алибек', username: '@alibek', messages: 28, lastSeen: 'Кеше' },
 ];
 
 function ChatPage() {

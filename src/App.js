@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
- 
+
 const GROQ_API_KEY = process.env.REACT_APP_GROQ_API_KEY;
- 
+
 const mockStats = {
   totalUsers: 1247,
   activeToday: 89,
   totalMessages: 15632,
   avgResponseTime: 1.2,
 };
- 
+
 const mockMessageData = [
   { day: 'Дс', messages: 120 },
   { day: 'Сс', messages: 98 },
@@ -19,7 +19,7 @@ const mockMessageData = [
   { day: 'Сб', messages: 89 },
   { day: 'Жс', messages: 76 },
 ];
- 
+
 const mockCommands = [
   { command: '/start', count: 234 },
   { command: '/help', count: 189 },
@@ -27,7 +27,7 @@ const mockCommands = [
   { command: '/benchmark', count: 98 },
   { command: '/funcall', count: 76 },
 ];
- 
+
 const mockUsers = [
   { id: 1, name: 'Алибек', username: '@alibek', messages: 45, lastSeen: '5 мин бұрын' },
   { id: 2, name: 'Айгерім', username: '@aigerin', messages: 32, lastSeen: '1 сағат бұрын' },
@@ -35,8 +35,7 @@ const mockUsers = [
   { id: 4, name: 'Нұрлан', username: '@nurlan', messages: 19, lastSeen: 'Кеше' },
   { id: 5, name: 'Зарина', username: '@zarina', messages: 15, lastSeen: 'Кеше' },
 ];
- 
-// ============ CHAT PAGE ============
+
 function ChatPage() {
   const [messages, setMessages] = useState([
     { role: 'assistant', text: 'Сәлем! Мен ботыңның AI көмекшісімін 🤖\n\nМен мыналарды жасай аламын:\n• 💬 Кез келген сұраққа жауап беремін\n• 🎨 Сурет жасаймын (/imagine немесе "сурет жаса: ...")\n• 🖼 Жіберген суретіңді талдаймын\n• 🎤 Дауыстық хабарлама транскрипциялаймын\n\nНе жасайық?' }
@@ -46,35 +45,36 @@ function ChatPage() {
   const [generatingImage, setGeneratingImage] = useState(false);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
- 
+
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);
- 
+
   const generateImage = async (prompt) => {
     setGeneratingImage(true);
     setMessages(prev => [...prev, { role: 'assistant', text: `🎨 "${prompt}" суреті жасалуда...` }]);
-    
+
     try {
       const seed = Date.now();
       const encodedPrompt = encodeURIComponent(prompt);
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=512&nologo=true&seed=${seed}&model=flux`;
-      
+      // ← &model=flux алынды
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=512&nologo=true&seed=${seed}`;
+
       await new Promise((resolve) => {
         const img = new Image();
         img.crossOrigin = 'anonymous';
         img.onload = resolve;
         img.onerror = resolve;
         img.src = imageUrl;
-        setTimeout(resolve, 10000);
+        setTimeout(resolve, 15000);
       });
-      
+
       setMessages(prev => {
         const newMsgs = [...prev];
-        newMsgs[newMsgs.length - 1] = { 
-          role: 'assistant', 
+        newMsgs[newMsgs.length - 1] = {
+          role: 'assistant',
           text: `🎨 "${prompt}" — сурет дайын!`,
           image: imageUrl
         };
@@ -85,8 +85,8 @@ function ChatPage() {
       const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=512&nologo=true`;
       setMessages(prev => {
         const newMsgs = [...prev];
-        newMsgs[newMsgs.length - 1] = { 
-          role: 'assistant', 
+        newMsgs[newMsgs.length - 1] = {
+          role: 'assistant',
           text: `🎨 "${prompt}" — сурет дайын!`,
           image: imageUrl
         };
@@ -95,7 +95,7 @@ function ChatPage() {
     }
     setGeneratingImage(false);
   };
- 
+
   const analyzeImage = async (base64Image) => {
     try {
       const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -107,10 +107,7 @@ function ChatPage() {
         body: JSON.stringify({
           model: 'meta-llama/llama-4-scout-17b-16e-instruct',
           messages: [
-            {
-              role: 'system',
-              content: 'Сен AI көмекшісісің. Суреттерді қазақ тілінде толық сипатта.'
-            },
+            { role: 'system', content: 'Сен AI көмекшісісің. Суреттерді қазақ тілінде толық сипатта.' },
             {
               role: 'user',
               content: [
@@ -128,24 +125,20 @@ function ChatPage() {
       return '❌ Суретті талдай алмадым.';
     }
   };
- 
+
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
- 
     const reader = new FileReader();
     reader.onload = async (event) => {
       const base64 = event.target.result.split(',')[1];
       const imageUrl = event.target.result;
-      
-      setMessages(prev => [...prev, 
+      setMessages(prev => [...prev,
         { role: 'user', text: '🖼 Сурет жіберілді', image: imageUrl },
         { role: 'assistant', text: '🔍 Суретті талдап жатырмын...' }
       ]);
-      
       setLoading(true);
       const analysis = await analyzeImage(base64);
-      
       setMessages(prev => {
         const newMsgs = [...prev];
         newMsgs[newMsgs.length - 1] = { role: 'assistant', text: analysis };
@@ -155,14 +148,13 @@ function ChatPage() {
     };
     reader.readAsDataURL(file);
   };
- 
+
   const sendMessage = async () => {
     if (!input.trim() || loading || generatingImage) return;
- 
     const userMsg = input.trim();
     setInput('');
     setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
- 
+
     const imagePatterns = [
       /^\/imagine\s+(.+)/i,
       /сурет жаса[:\s]+(.+)/i,
@@ -171,7 +163,7 @@ function ChatPage() {
       /generate image[:\s]+(.+)/i,
       /сурет салшы[:\s]+(.+)/i,
     ];
- 
+
     for (const pattern of imagePatterns) {
       const match = userMsg.match(pattern);
       if (match) {
@@ -179,7 +171,7 @@ function ChatPage() {
         return;
       }
     }
- 
+
     setLoading(true);
     try {
       const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -211,7 +203,6 @@ function ChatPage() {
           max_tokens: 1000,
         }),
       });
- 
       const data = await response.json();
       const answer = data.choices[0].message.content;
       setMessages(prev => [...prev, { role: 'assistant', text: answer }]);
@@ -220,22 +211,18 @@ function ChatPage() {
     }
     setLoading(false);
   };
- 
+
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#f5f6fa' }}>
       <div style={{
         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        padding: '16px 24px',
-        color: 'white',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
+        padding: '16px 24px', color: 'white',
+        display: 'flex', alignItems: 'center', gap: '12px',
       }}>
         <div style={{
           width: '48px', height: '48px', borderRadius: '50%',
           background: 'rgba(255,255,255,0.2)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '24px'
+          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px'
         }}>🤖</div>
         <div>
           <div style={{ fontWeight: 'bold', fontSize: '18px' }}>@nurlanzzh_bot</div>
@@ -248,21 +235,13 @@ function ChatPage() {
           💬 Сурет жаса · 🖼 Сурет жібер · 🔍 Іздеу
         </div>
       </div>
- 
-      <div style={{
-        flex: 1,
-        overflowY: 'auto',
-        padding: '20px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '16px',
-      }}>
+
+      <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
         {messages.map((msg, i) => (
           <div key={i} style={{
             display: 'flex',
             justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
-            alignItems: 'flex-end',
-            gap: '8px',
+            alignItems: 'flex-end', gap: '8px',
           }}>
             {msg.role === 'assistant' && (
               <div style={{
@@ -278,26 +257,24 @@ function ChatPage() {
                 borderRadius: msg.role === 'user' ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
                 background: msg.role === 'user' ? 'linear-gradient(135deg, #667eea, #764ba2)' : 'white',
                 color: msg.role === 'user' ? 'white' : '#333',
-                fontSize: '15px',
-                lineHeight: '1.6',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                whiteSpace: 'pre-wrap',
+                fontSize: '15px', lineHeight: '1.6',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.08)', whiteSpace: 'pre-wrap',
               }}>
                 {msg.text}
               </div>
               {msg.image && (
-                <img 
-                  src={msg.image} 
+                <img
+                  src={msg.image}
                   alt="generated"
                   referrerPolicy="no-referrer"
-                  style={{ 
-                    maxWidth: '100%', 
-                    borderRadius: '12px', 
-                    marginTop: '8px',
-                    boxShadow: '0 4px 16px rgba(0,0,0,0.15)'
+                  style={{
+                    maxWidth: '100%', borderRadius: '12px',
+                    marginTop: '8px', boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+                    display: 'block'
                   }}
                   onError={(e) => {
-                    e.target.src = `https://placehold.co/512x512/667eea/white?text=Сурет+жүктелуде`;
+                    e.target.onerror = null;
+                    e.target.style.display = 'none';
                   }}
                 />
               )}
@@ -311,10 +288,7 @@ function ChatPage() {
               background: 'linear-gradient(135deg, #667eea, #764ba2)',
               display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px'
             }}>🤖</div>
-            <div style={{
-              padding: '12px 16px', borderRadius: '20px 20px 20px 4px',
-              background: 'white', boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-            }}>
+            <div style={{ padding: '12px 16px', borderRadius: '20px 20px 20px 4px', background: 'white', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
               <span style={{ color: '#999' }}>
                 {generatingImage ? '🎨 Сурет жасалуда...' : '⏳ Жазып жатыр...'}
               </span>
@@ -323,46 +297,24 @@ function ChatPage() {
         )}
         <div ref={messagesEndRef} />
       </div>
- 
+
       <div style={{
-        padding: '16px 20px',
-        background: 'white',
-        borderTop: '1px solid #f0f0f0',
-        display: 'flex',
-        gap: '10px',
-        alignItems: 'flex-end',
+        padding: '16px 20px', background: 'white',
+        borderTop: '1px solid #f0f0f0', display: 'flex', gap: '10px', alignItems: 'flex-end',
       }}>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          style={{ display: 'none' }}
-          onChange={handleImageUpload}
-        />
+        <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageUpload} />
         <button
           onClick={() => fileInputRef.current.click()}
-          style={{
-            background: '#f0f0f5', border: 'none', borderRadius: '50%',
-            width: '44px', height: '44px', cursor: 'pointer', fontSize: '20px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}
+          style={{ background: '#f0f0f5', border: 'none', borderRadius: '50%', width: '44px', height: '44px', cursor: 'pointer', fontSize: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           title="Сурет жібер"
         >🖼</button>
-        <div style={{ flex: 1, position: 'relative' }}>
+        <div style={{ flex: 1 }}>
           <input
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
             placeholder='Сұрақ жаз... немесе "сурет жаса: қазақ даласы"'
-            style={{
-              width: '100%',
-              padding: '12px 16px',
-              borderRadius: '24px',
-              border: '1px solid #e0e0e0',
-              outline: 'none',
-              fontSize: '15px',
-              boxSizing: 'border-box',
-            }}
+            style={{ width: '100%', padding: '12px 16px', borderRadius: '24px', border: '1px solid #e0e0e0', outline: 'none', fontSize: '15px', boxSizing: 'border-box' }}
           />
         </div>
         <button
@@ -370,8 +322,7 @@ function ChatPage() {
           disabled={loading || generatingImage}
           style={{
             background: loading || generatingImage ? '#ccc' : 'linear-gradient(135deg, #667eea, #764ba2)',
-            border: 'none', borderRadius: '50%',
-            width: '44px', height: '44px',
+            border: 'none', borderRadius: '50%', width: '44px', height: '44px',
             color: 'white', cursor: loading ? 'not-allowed' : 'pointer',
             fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}
@@ -380,14 +331,10 @@ function ChatPage() {
     </div>
   );
 }
- 
-// ============ STATS PAGE ============
+
 function StatCard({ title, value, subtitle, color, icon }) {
   return (
-    <div style={{
-      background: 'white', borderRadius: '16px', padding: '24px',
-      boxShadow: '0 2px 12px rgba(0,0,0,0.08)', borderLeft: `4px solid ${color}`,
-    }}>
+    <div style={{ background: 'white', borderRadius: '16px', padding: '24px', boxShadow: '0 2px 12px rgba(0,0,0,0.08)', borderLeft: `4px solid ${color}` }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <div style={{ fontSize: '14px', color: '#888', marginBottom: '8px' }}>{title}</div>
@@ -399,19 +346,17 @@ function StatCard({ title, value, subtitle, color, icon }) {
     </div>
   );
 }
- 
+
 function StatsPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#f5f6fa', padding: '32px 40px' }}>
       <h2 style={{ margin: '0 0 24px', color: '#333', fontSize: '24px' }}>📊 Бот статистикасы</h2>
- 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '32px' }}>
         <StatCard title="Барлық пайдаланушылар" value={mockStats.totalUsers.toLocaleString()} subtitle="+12 бүгін" color="#667eea" icon="👥" />
         <StatCard title="Бүгін белсенді" value={mockStats.activeToday} subtitle="Соңғы 24 сағат" color="#4ade80" icon="⚡" />
         <StatCard title="Барлық хабарламалар" value={mockStats.totalMessages.toLocaleString()} subtitle="+234 бүгін" color="#f59e0b" icon="💬" />
         <StatCard title="Орт. жауап уақыты" value={`${mockStats.avgResponseTime}с`} subtitle="Groq API" color="#f43f5e" icon="⏱" />
       </div>
- 
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', marginBottom: '32px' }}>
         <div style={{ background: 'white', borderRadius: '16px', padding: '24px', boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}>
           <h3 style={{ margin: '0 0 20px', color: '#333' }}>📈 Хабарламалар (осы апта)</h3>
@@ -425,7 +370,6 @@ function StatsPage() {
             </LineChart>
           </ResponsiveContainer>
         </div>
- 
         <div style={{ background: 'white', borderRadius: '16px', padding: '24px', boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}>
           <h3 style={{ margin: '0 0 20px', color: '#333' }}>🔧 Танымал командалар</h3>
           <ResponsiveContainer width="100%" height={250}>
@@ -439,7 +383,6 @@ function StatsPage() {
           </ResponsiveContainer>
         </div>
       </div>
- 
       <div style={{ background: 'white', borderRadius: '16px', padding: '24px', boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}>
         <h3 style={{ margin: '0 0 20px', color: '#333' }}>👥 Белсенді пайдаланушылар</h3>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -480,58 +423,36 @@ function StatsPage() {
     </div>
   );
 }
- 
-// ============ MAIN APP ============
+
 function App() {
   const [page, setPage] = useState('chat');
   const [currentTime, setCurrentTime] = useState(new Date());
- 
+
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
- 
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <div style={{
         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        padding: '0 24px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        height: '56px',
-        flexShrink: 0,
+        padding: '0 24px', display: 'flex', alignItems: 'center',
+        justifyContent: 'space-between', height: '56px', flexShrink: 0,
       }}>
         <div style={{ display: 'flex', gap: '4px' }}>
-          <button
-            onClick={() => setPage('chat')}
-            style={{
-              background: page === 'chat' ? 'rgba(255,255,255,0.25)' : 'transparent',
-              border: 'none', color: 'white', padding: '8px 20px',
-              borderRadius: '8px', cursor: 'pointer', fontSize: '15px',
-              fontWeight: page === 'chat' ? 'bold' : 'normal',
-            }}
-          >💬 Чат</button>
-          <button
-            onClick={() => setPage('stats')}
-            style={{
-              background: page === 'stats' ? 'rgba(255,255,255,0.25)' : 'transparent',
-              border: 'none', color: 'white', padding: '8px 20px',
-              borderRadius: '8px', cursor: 'pointer', fontSize: '15px',
-              fontWeight: page === 'stats' ? 'bold' : 'normal',
-            }}
-          >📊 Статистика</button>
+          <button onClick={() => setPage('chat')} style={{ background: page === 'chat' ? 'rgba(255,255,255,0.25)' : 'transparent', border: 'none', color: 'white', padding: '8px 20px', borderRadius: '8px', cursor: 'pointer', fontSize: '15px', fontWeight: page === 'chat' ? 'bold' : 'normal' }}>💬 Чат</button>
+          <button onClick={() => setPage('stats')} style={{ background: page === 'stats' ? 'rgba(255,255,255,0.25)' : 'transparent', border: 'none', color: 'white', padding: '8px 20px', borderRadius: '8px', cursor: 'pointer', fontSize: '15px', fontWeight: page === 'stats' ? 'bold' : 'normal' }}>📊 Статистика</button>
         </div>
         <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '13px' }}>
           🤖 @nurlanzzh_bot · {currentTime.toLocaleTimeString('kk-KZ')}
         </div>
       </div>
- 
       <div style={{ flex: 1, overflow: 'auto' }}>
         {page === 'chat' ? <ChatPage /> : <StatsPage />}
       </div>
     </div>
   );
 }
- 
+
 export default App;

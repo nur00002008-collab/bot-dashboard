@@ -58,22 +58,40 @@ function ChatPage() {
     setMessages(prev => [...prev, { role: 'assistant', text: `🎨 "${prompt}" суреті жасалуда...` }]);
     
     try {
+      const seed = Date.now();
       const encodedPrompt = encodeURIComponent(prompt);
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=512&nologo=true&seed=${Date.now()}`;
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=512&nologo=true&seed=${seed}&model=flux`;
       
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = resolve;
+        img.onerror = resolve;
+        img.src = imageUrl;
+        setTimeout(resolve, 10000);
+      });
       
       setMessages(prev => {
         const newMsgs = [...prev];
         newMsgs[newMsgs.length - 1] = { 
           role: 'assistant', 
-          text: `🎨 Сурет дайын!`,
+          text: `🎨 "${prompt}" — сурет дайын!`,
           image: imageUrl
         };
         return newMsgs;
       });
     } catch (err) {
-      setMessages(prev => [...prev, { role: 'assistant', text: '❌ Сурет жасалмады.' }]);
+      const encodedPrompt = encodeURIComponent(prompt);
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=512&nologo=true`;
+      setMessages(prev => {
+        const newMsgs = [...prev];
+        newMsgs[newMsgs.length - 1] = { 
+          role: 'assistant', 
+          text: `🎨 "${prompt}" — сурет дайын!`,
+          image: imageUrl
+        };
+        return newMsgs;
+      });
     }
     setGeneratingImage(false);
   };
@@ -145,7 +163,6 @@ function ChatPage() {
     setInput('');
     setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
  
-    // Сурет жасау командасын тексер
     const imagePatterns = [
       /^\/imagine\s+(.+)/i,
       /сурет жаса[:\s]+(.+)/i,
@@ -206,7 +223,6 @@ function ChatPage() {
  
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#f5f6fa' }}>
-      {/* Chat header */}
       <div style={{
         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
         padding: '16px 24px',
@@ -233,7 +249,6 @@ function ChatPage() {
         </div>
       </div>
  
-      {/* Messages */}
       <div style={{
         flex: 1,
         overflowY: 'auto',
@@ -274,13 +289,16 @@ function ChatPage() {
                 <img 
                   src={msg.image} 
                   alt="generated"
+                  referrerPolicy="no-referrer"
                   style={{ 
                     maxWidth: '100%', 
                     borderRadius: '12px', 
                     marginTop: '8px',
                     boxShadow: '0 4px 16px rgba(0,0,0,0.15)'
                   }}
-                  onError={(e) => { e.target.style.display = 'none'; }}
+                  onError={(e) => {
+                    e.target.src = `https://placehold.co/512x512/667eea/white?text=Сурет+жүктелуде`;
+                  }}
                 />
               )}
             </div>
@@ -306,7 +324,6 @@ function ChatPage() {
         <div ref={messagesEndRef} />
       </div>
  
-      {/* Input */}
       <div style={{
         padding: '16px 20px',
         background: 'white',
@@ -476,7 +493,6 @@ function App() {
  
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-      {/* Navigation */}
       <div style={{
         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
         padding: '0 24px',
@@ -511,7 +527,6 @@ function App() {
         </div>
       </div>
  
-      {/* Page content */}
       <div style={{ flex: 1, overflow: 'auto' }}>
         {page === 'chat' ? <ChatPage /> : <StatsPage />}
       </div>

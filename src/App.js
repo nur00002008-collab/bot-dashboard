@@ -59,7 +59,6 @@ function ChatPage() {
     try {
       const seed = Date.now();
       const encodedPrompt = encodeURIComponent(prompt);
-      // ← &model=flux алынды
       const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=512&nologo=true&seed=${seed}`;
 
       await new Promise((resolve) => {
@@ -444,8 +443,27 @@ function App() {
           <button onClick={() => setPage('chat')} style={{ background: page === 'chat' ? 'rgba(255,255,255,0.25)' : 'transparent', border: 'none', color: 'white', padding: '8px 20px', borderRadius: '8px', cursor: 'pointer', fontSize: '15px', fontWeight: page === 'chat' ? 'bold' : 'normal' }}>💬 Чат</button>
           <button onClick={() => setPage('stats')} style={{ background: page === 'stats' ? 'rgba(255,255,255,0.25)' : 'transparent', border: 'none', color: 'white', padding: '8px 20px', borderRadius: '8px', cursor: 'pointer', fontSize: '15px', fontWeight: page === 'stats' ? 'bold' : 'normal' }}>📊 Статистика</button>
         </div>
-        <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '13px' }}>
-          🤖 @nurlanzzh_bot · {currentTime.toLocaleTimeString('kk-KZ')}
+        
+        {/* МЫНА ЖЕРДЕ ӨЗГЕРІС ЕНГІЗІЛДІ: Енді бұл жай мәтін емес, ТГ-ға тікелей лақтыратын нағыз сілтеме */}
+        <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <span>🤖 </span>
+          <a 
+            href="https://t.me/nurlanzzh_bot" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            style={{ 
+              color: '#ffffff', 
+              textDecoration: 'none', 
+              fontWeight: 'bold', 
+              cursor: 'pointer',
+              display: 'inline-block' 
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
+            onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+          >
+            @nurlanzzh_bot
+          </a>
+          <span> · {currentTime.toLocaleTimeString('kk-KZ')}</span>
         </div>
       </div>
       <div style={{ flex: 1, overflow: 'auto' }}>
